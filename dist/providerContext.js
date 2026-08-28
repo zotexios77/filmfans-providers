@@ -57276,11 +57276,44 @@ function fromURL(_0) {
 __name(fromURL, "fromURL");
 
 // providers/providerContext.ts
+var mockStorage = /* @__PURE__ */ new Map();
 var providerContext = {
   axios: axios_default,
-  Aes: null,
   commonHeaders: headers,
-  cheerio: esm_exports4
+  // webview not aviable in local test only avaiable in app
+  openWebView: /* @__PURE__ */ __name((url2, options) => {
+    return Promise.resolve({
+      success: false,
+      data: "",
+      cookies: "",
+      cookieMap: {},
+      userAgent: "",
+      url: url2
+    });
+  }, "openWebView"),
+  cheerio: esm_exports4,
+  kvStore: {
+    get: /* @__PURE__ */ __name((key) => __async(null, null, function* () {
+      const val2 = mockStorage.get(key);
+      return val2 !== void 0 ? JSON.parse(JSON.stringify(val2)) : void 0;
+    }), "get"),
+    set: /* @__PURE__ */ __name((key, value) => __async(null, null, function* () {
+      if (value === void 0) {
+        mockStorage.delete(key);
+        return;
+      }
+      mockStorage.set(key, JSON.parse(JSON.stringify(value)));
+    }), "set"),
+    delete: /* @__PURE__ */ __name((key) => __async(null, null, function* () {
+      return mockStorage.delete(key);
+    }), "delete"),
+    keys: /* @__PURE__ */ __name(() => __async(null, null, function* () {
+      return Array.from(mockStorage.keys());
+    }), "keys"),
+    clear: /* @__PURE__ */ __name(() => __async(null, null, function* () {
+      mockStorage.clear();
+    }), "clear")
+  }
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

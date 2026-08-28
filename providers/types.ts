@@ -22,6 +22,12 @@ export type TextTracks = {
   uri: string;
 }[];
 
+export interface SkipInterval {
+  title?: string;
+  from: number;
+  to: number;
+}
+
 // getStream
 export interface Stream {
   server: string;
@@ -30,12 +36,14 @@ export interface Stream {
   quality?: "360" | "480" | "720" | "1080" | "2160";
   subtitles?: TextTracks;
   headers?: any;
+  skip?: SkipInterval[];
 }
 
 // getInfo
 export interface Info {
   title: string;
   image: string;
+  poster?: string;
   logo?: string;
   synopsis: string;
   imdbId: string;
@@ -53,6 +61,7 @@ export interface EpisodeLink {
   link: string;
   description?: string;
   image?: string;
+  skip?: SkipInterval[];
 }
 
 export interface Link {
@@ -65,6 +74,7 @@ export interface Link {
     type?: "movie" | "series";
     description?: string;
     image?: string;
+    skip?: SkipInterval[];
   }[];
 }
 
@@ -86,11 +96,13 @@ export interface ProviderType {
     type,
     signal,
     providerContext,
+    isDownload,
   }: {
     link: string;
     type: string;
-    signal: AbortSignal;
+    signal?: AbortSignal;
     providerContext: ProviderContext;
+    isDownload?: boolean;
   }) => Promise<Stream[]>;
   GetHomePosts: ({
     filter,
@@ -168,13 +180,64 @@ export interface OpenWebViewResult {
   url: string;
 }
 
+export interface ProviderKvStore {
+  get: <T = unknown>(key: string) => Promise<T | undefined>;
+  set: (key: string, value: unknown) => Promise<void>;
+  delete: (key: string) => Promise<boolean>;
+  keys: () => Promise<string[]>;
+  clear: () => Promise<void>;
+}
+
+interface SettingsFieldBase {
+  key: string;
+  label: string;
+  description?: string;
+}
+
+interface SettingsTextField extends SettingsFieldBase {
+  type: "text";
+  defaultValue?: string;
+  placeholder?: string;
+}
+
+interface SettingsToggleField extends SettingsFieldBase {
+  type: "toggle";
+  defaultValue?: boolean;
+}
+
+interface SettingsSelectField extends SettingsFieldBase {
+  type: "select";
+  options: { label: string; value: string }[];
+  defaultValue?: string;
+}
+
+interface SettingsMultiSelectField extends SettingsFieldBase {
+  type: "multiselect";
+  options: { label: string; value: string }[];
+  defaultValue?: string[];
+}
+
+interface SettingsNumberField extends SettingsFieldBase {
+  type: "number";
+  defaultValue?: number;
+  min?: number;
+  max?: number;
+}
+
+export type SettingsField =
+  | SettingsTextField
+  | SettingsToggleField
+  | SettingsSelectField
+  | SettingsMultiSelectField
+  | SettingsNumberField;
+
 export type ProviderContext = {
   axios: AxiosStatic;
-  Aes: any; // AES encryption utility, if used
   commonHeaders: Record<string, string>;
   cheerio: typeof cheerio;
   openWebView: (
     url: string,
     options?: OpenWebViewOptions,
   ) => Promise<OpenWebViewResult>;
+  kvStore: ProviderKvStore;
 };
